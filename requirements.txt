@@ -1,0 +1,21 @@
+django
+Pillow
+dnspython
+enum-compat
+eventlet
+greenlet
+monotonic
+python-engineio
+python-socketio
+pytz
+six
+mysqlclient
+djangorestframework
+pyJWT
+djangorestframework-simplejwt
+django-phonenumber-field[phonenumbers]
+django-countries
+django-cities
+django-cors-headers
+--upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
+-U scikit-fuzzy
