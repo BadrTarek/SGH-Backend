@@ -1,5 +1,5 @@
 from .models import Greenhouse 
-from Apps.Hardware.serializers import ActuatorSerializer
+from Apps.Hardware.serializers.models_serializers import ActuatorSerializer
 # from Apps.Hardware.serializers import SensorSerializer
 from rest_framework import serializers
 from Library.api_response import ApiResponse
@@ -36,6 +36,7 @@ class GreenhouseSerializers(CountryFieldMixin , serializers.ModelSerializer):
             greenhouse.water_tank_size = validated_data.get("water_tank_size" , greenhouse.water_tank_size)
             greenhouse.number_of_crops = validated_data.get("number_of_crops" , greenhouse.number_of_crops)
             greenhouse.country = validated_data.get("country" , greenhouse.country)
+            greenhouse.automated_control = validated_data.get("automated_control" , greenhouse.automated_control)
             
             greenhouse.save()
             

@@ -1,7 +1,7 @@
+from multiprocessing import set_start_method
 from turtle import position
 from django.db import models
 from django.utils.safestring import mark_safe
-
 
 class Sensor(models.Model):
     name = models.CharField(max_length=120)
@@ -18,6 +18,10 @@ class Sensor(models.Model):
     
     image_tag.short_description = 'Image'
     image_tag.allow_tags = True
+    
+    
+    def get_sensor(id:int):
+        return Sensor.objects.filter(pk=id).last()
 
     
 class SensorValues(models.Model):
@@ -28,6 +32,13 @@ class SensorValues(models.Model):
     
     def __str__(self):
         return self.value
+    
+    # Helper functions
+    def get_all_sensor_values(greenhouse:'Greenhouses.Greenhouse' , sensor:Sensor):
+        return SensorValues.objects.filter(greenhouse = greenhouse , sensor = sensor)
+    
+    def get_last_sensor_values(greenhouse:'Greenhouses.Greenhouse' , sensor:Sensor):
+        return SensorValues.objects.filter(greenhouse = greenhouse , sensor = sensor).order_by('-id')[0]
 
 
 class Actuator(models.Model):
@@ -37,7 +48,6 @@ class Actuator(models.Model):
     description = models.TextField(max_length=600 , null=True , blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     image = models.ImageField(upload_to="HardwareUploads/")
-    
     def image_tag(self):
         return mark_safe(f'<img src="{self.image.url}" width="100" />')
     
@@ -46,6 +56,15 @@ class Actuator(models.Model):
     
     def __str__(self):
         return self.name
+    
+    def get_actuator(id:int):
+        return Actuator.objects.filter(pk=id).last()
+    
+    
+    
+    
+    
+    
 
 
 class ActuatorsAction(models.Model):
@@ -54,10 +73,30 @@ class ActuatorsAction(models.Model):
     actuator = models.ForeignKey(Actuator , on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     greenhouse = models.ForeignKey("Greenhouses.Greenhouse" , on_delete=models.CASCADE)
+    is_automated_action = models.BooleanField(default=False)
 
     def __str__(self):
         return self.value
     
+    # Helper functions
+    def get_all_actuator_actions(greenhouse:'Greenhouses.Greenhouse' , actuator:Actuator):
+        return ActuatorsAction.objects.filter(greenhouse = greenhouse , actuator = actuator)
+    
+    def get_last_actuator_actions(greenhouse:'Greenhouses.Greenhouse' , actuator:Actuator):
+        try:
+            return ActuatorsAction.objects.filter(greenhouse = greenhouse , actuator = actuator).order_by('-id')[0]
+        except :
+            pass
+        return ActuatorsAction.objects.filter(greenhouse = greenhouse , actuator = actuator).order_by('-id')
 
+
+
+    
+    def get_last_automated_actions(greenhouse:'Greenhouses.Greenhouse' , actuator:Actuator):
+        try:
+            return ActuatorsAction.objects.filter(greenhouse = greenhouse , is_automated_action = True , actuator = actuator).order_by('-id')[0]
+        except :
+            pass
+        return ActuatorsAction.objects.filter(greenhouse = greenhouse , is_automated_action = True , actuator = actuator).order_by('-id')
 
 

@@ -20,6 +20,8 @@ application = get_wsgi_application()
 
 # from Apps.HardwareApp.views import sio
 from SocketIO.server import sio
+from SocketIO.socketio_server_settings import PORT
+
 import socketio
 
 
@@ -28,6 +30,6 @@ application = socketio.WSGIApp(sio, application)
 import eventlet
 import eventlet.wsgi
 
-eventlet.wsgi.server(eventlet.listen(('', 8000)), application)
+eventlet.wsgi.server(eventlet.listen(('', PORT)), application)
 
 

@@ -3,11 +3,51 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from Library.permissions import HasGreenhouse , IsGreenhouseAuthenticated
-from .serializers import SensorValueSerializer  ,GetActionsSerializer , ActuatorActionsSerializer ,TakeActionSerializer,  StoreSensorValuesSerializer , GetSensorValuesSerializer
-from Apps.Greenhouses.serializers import GreenhouseSerializers
+from .serializers.requests_serializers import TakeActionSerializer,  StoreSensorValuesSerializer , TakeAutomatedActionSerializer
+from .serializers.models_serializers import SensorSerializer, ActuatorSerializer,SensorValueSerializer,ActuatorActionsSerializer 
+
 from Library.api_response import ApiResponse
 
 api_response = ApiResponse()
+
+
+class TakeAutomatedActionView(APIView):
+    def post(self,request):
+
+        api_response.__init__()
+
+        serializer = TakeAutomatedActionSerializer(data = request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors)
+        
+        action = serializer.save()
+        
+        api_response.set_status_code(status.HTTP_200_OK)
+        api_response.set_data("action",ActuatorActionsSerializer(action).data)
+        
+        # from FuzzyLogic.automated_action import request as automated_action_request
+        # automated_action_request(1,"mqN9weY",1,"Badoooooor")
+        
+        
+        # api_response.set_data("Message","sss")
+        # return api_response.response()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 class StoreSensorsValuesView(APIView):
     # permission_classes = [IsGreenhouseAuthenticated]
@@ -30,42 +70,42 @@ class StoreSensorsValuesView(APIView):
         return api_response.response()
 
 
-class GetLastSensorValuesView(APIView):
+# class GetLastSensorValuesView(APIView):
     
-    permission_classes = [IsAuthenticated & HasGreenhouse  ]
+#     # permission_classes = [IsAuthenticated & HasGreenhouse  ]
     
-    def post(self , request ):
-        api_response.__init__()
+#     def post(self , request ):
+#         api_response.__init__()
     
-        serializer = GetSensorValuesSerializer(data=request.data)    
+#         serializer = GetSensorValuesSerializer(data=request.data)    
         
-        if not serializer.is_valid():
-            return Response(serializer.errors)
+#         if not serializer.is_valid():
+#             return Response(serializer.errors)
         
-        values = serializer.get_last_values()
+#         values = serializer.get_last_values()
         
-        api_response.set_status_code(status.HTTP_200_OK).set_data("data",values)
+#         api_response.set_status_code(status.HTTP_200_OK).set_data("data",values)
 
-        return api_response.response()
+#         return api_response.response()
 
-class GetAllSensorValuesView(APIView):
+# class GetAllSensorValuesView(APIView):
     
-    permission_classes = [IsAuthenticated & HasGreenhouse  ]
+#     # permission_classes = [IsAuthenticated & HasGreenhouse  ]
     
-    def post(self , request ):
+#     def post(self , request ):
         
-        api_response.__init__()
+#         api_response.__init__()
 
-        serializer = GetSensorValuesSerializer(data=request.data)
+#         serializer = GetSensorValuesSerializer(data=request.data)
         
-        if not serializer.is_valid():
-            return Response(serializer.errors)
+#         if not serializer.is_valid():
+#             return Response(serializer.errors)
         
-        values = serializer.get_all_values()
+#         values = serializer.get_all_values()
 
-        api_response.set_status_code(status.HTTP_200_OK).set_data("data",values)
+#         api_response.set_status_code(status.HTTP_200_OK).set_data("data",values)
 
-        return api_response.response()
+#         return api_response.response()
 
 
 
@@ -90,41 +130,41 @@ class TakeAcionView(APIView):
 
     
 
-class GetLastActionsView(APIView):
+# class GetLastActionsView(APIView):
     
-    # permission_classes = [IsAuthenticated & HasGreenhouse  ]
+#     # permission_classes = [IsAuthenticated & HasGreenhouse  ]
     
-    def post(self , request ):
-        api_response.__init__()
+#     def post(self , request ):
+#         api_response.__init__()
     
-        serializer = GetActionsSerializer(data=request.data)    
+#         serializer = GetActionsSerializer(data=request.data)    
         
-        if not serializer.is_valid():
-            return Response(serializer.errors)
+#         if not serializer.is_valid():
+#             return Response(serializer.errors)
         
-        values = serializer.get_last_actions()
+#         values = serializer.get_last_actions()
         
-        api_response.set_status_code(status.HTTP_200_OK).set_data("data",values)
+#         api_response.set_status_code(status.HTTP_200_OK).set_data("data",values)
 
-        return api_response.response()
+#         return api_response.response()
 
-class GetAllActionsView(APIView):
+# class GetAllActionsView(APIView):
     
-    # permission_classes = [IsAuthenticated & HasGreenhouse  ]
+#     # permission_classes = [IsAuthenticated & HasGreenhouse  ]
     
-    def post(self , request ):
+#     def post(self , request ):
         
-        api_response.__init__()
+#         api_response.__init__()
 
-        serializer = GetActionsSerializer(data=request.data)
+#         serializer = GetActionsSerializer(data=request.data)
         
-        if not serializer.is_valid():
-            return Response(serializer.errors)
+#         if not serializer.is_valid():
+#             return Response(serializer.errors)
         
-        values = serializer.get_all_actions()
+#         values = serializer.get_all_actions()
 
-        api_response.set_status_code(status.HTTP_200_OK).set_data("data",values)
+#         api_response.set_status_code(status.HTTP_200_OK).set_data("data",values)
 
-        return api_response.response()
+#         return api_response.response()
 
 

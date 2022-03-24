@@ -17,5 +17,8 @@ django-phonenumber-field[phonenumbers]
 django-countries
 django-cities
 django-cors-headers
---upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
--U scikit-fuzzy
+scikit-fuzzy
+numpy
+pandas
+matplotlib
+scikit-learn
