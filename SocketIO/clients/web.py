@@ -35,6 +35,7 @@ class WebNamespace(socketio.Namespace):
             
 
             response = api_response.set_status_code(200).get()
+            print(response)
             
             self.emit('take_action', response  ,room='myGreenhouse', namespace=HARDWARE_NAMESPACE)
             self.emit('action_taked', response  ,room='myGreenhouse', namespace=MOBILE_NAMESPACE)

@@ -7,7 +7,9 @@ from Apps.Plants.models import Plant
 from Apps.Hardware.models import Sensor
 from Apps.Hardware.models import Actuator
 # Create your models here.
+from datetime import  datetime , timedelta
 
+# DEFAULT_TIME_BETWEEN_AUTOMATED_ACTION = str(datetime.strptime(str(timedelta(minutes=10)) , '%Y-%m-%d %H:%M:%S'))
 
 class Greenhouse(models.Model):
 
@@ -40,6 +42,7 @@ class Greenhouse(models.Model):
     token = models.TextField(max_length=500, null=True, blank=True)
 
     automated_control = models.BooleanField(default=True)
+    # time_between_automated_action = models.DateTimeField(default  = str(DEFAULT_TIME_BETWEEN_AUTOMATED_ACTION))
     
     def __str__(self):
         return str(self.id)

@@ -179,18 +179,20 @@ class PHFuzzyLogic:
         try:
             self.__pump_ctrl = ctrl.ControlSystem(self.__rules)
             self.__pump_sim = ctrl.ControlSystemSimulation(self.__pump_ctrl)
-            self.__pump_sim.input['ph'] = self.ph_value
-            self.__pump_sim.input['water_level'] = self.water_level_value
+            self.__pump_sim.input['ph'] = float(self.ph_value)
+            self.__pump_sim.input['water_level'] = float(self.water_level_value)
             self.__pump_sim.compute()
             return True
         except:
+            print("Error in PH defuziification process")
             return False
 
     def get_ouput_values(self):
+        """ This return dict contain ph_pump value and alkaline_pump value in order"""
         try:
             ouput = {
-                "ph_pump" : self.__pump_sim.output['ph_pump'],
-                "alkaline_pump": self.__pump_sim.output['alkaline_pump']
+                "ph_pump" : round(self.__pump_sim.output['ph_pump'],1),
+                "alkaline_pump": round(self.__pump_sim.output['alkaline_pump'],1)
             }
             return ouput
         except:

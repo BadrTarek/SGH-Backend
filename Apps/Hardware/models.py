@@ -38,7 +38,19 @@ class SensorValues(models.Model):
         return SensorValues.objects.filter(greenhouse = greenhouse , sensor = sensor)
     
     def get_last_sensor_values(greenhouse:'Greenhouses.Greenhouse' , sensor:Sensor):
-        return SensorValues.objects.filter(greenhouse = greenhouse , sensor = sensor).order_by('-id')[0]
+        try:
+            return SensorValues.objects.filter(greenhouse = greenhouse , sensor = sensor).order_by('-id')[0]
+        except :
+            pass
+        return SensorValues.objects.filter(greenhouse = greenhouse , sensor = sensor).order_by('-id')
+    
+    def get_before_last_sensor_values(greenhouse:'Greenhouses.Greenhouse' , sensor:Sensor):
+        try:
+            return SensorValues.objects.filter(greenhouse = greenhouse , sensor = sensor).order_by('-id')[1]
+        except :
+            pass
+        return SensorValues.objects.filter(greenhouse = greenhouse , sensor = sensor).order_by('-id')
+
 
 
 class Actuator(models.Model):

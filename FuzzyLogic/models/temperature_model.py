@@ -4,7 +4,9 @@ from skfuzzy import control as ctrl
 
 
 class TempFuzzyLogic:    
-
+    def __convert_to_fahrenheit(self,temp):
+        return (float(temp) * 1.8) + 32
+    
     def fuzzification(self):
         try:
 
@@ -22,13 +24,13 @@ class TempFuzzyLogic:
                 self.__temp_membership.universe, [60, 62.5, 65])
             self.__temp_membership['hot'] = fuzz.trapmf(
                 self.__temp_membership.universe, [65, 70, 80, 80])
-
-            self.__temp_rate_mambership['cold'] = fuzz.trimf(
-                self.__temp_rate_mambership .universe, [-50, -10, 0])
+            
+            self.__temp_rate_mambership['cold'] = fuzz.trapmf(
+                self.__temp_rate_mambership .universe, [-50,-50, -10, 0])
             self.__temp_rate_mambership['normal'] = fuzz.trimf(
                 self.__temp_rate_mambership .universe, [-10, 0, 10])
-            self.__temp_rate_mambership['hot'] = fuzz.trimf(
-                self.__temp_rate_mambership .universe, [0, 10, 50])
+            self.__temp_rate_mambership['hot'] = fuzz.trapmf(
+                self.__temp_rate_mambership .universe, [0, 10, 50,50])
 
             self.__fan_membership['slow'] = fuzz.trapmf(
                 self.__fan_membership.universe, [0, 0, 63, 127])
@@ -39,61 +41,66 @@ class TempFuzzyLogic:
 
             return True
         except:
+            print("Error in Temperature model in fuzzification process")
             return False
 
     def apply_rules(self):
         try:
             self.__rules = []
             self.__rules.append(ctrl.Rule(
-                self.__temp_membership['cold'] | self.__temp_rate_mambership['cold'], self.__fan_membership['slow']))
+                self.__temp_membership['cold'] & self.__temp_rate_mambership['cold'], self.__fan_membership['slow']))
             self.__rules.append(ctrl.Rule(
-                self.__temp_membership['cold'] | self.__temp_rate_mambership['normal'], self.__fan_membership['medium']))
+                self.__temp_membership['cold'] & self.__temp_rate_mambership['normal'], self.__fan_membership['medium']))
             self.__rules.append(ctrl.Rule(
-                self.__temp_membership['cold'] | self.__temp_rate_mambership['hot'], self.__fan_membership['fast']))
+                self.__temp_membership['cold'] & self.__temp_rate_mambership['hot'], self.__fan_membership['medium']))
 
             self.__rules.append(ctrl.Rule(
-                self.__temp_membership['normal'] | self.__temp_rate_mambership['cold'], self.__fan_membership['medium']))
+                self.__temp_membership['normal'] & self.__temp_rate_mambership['cold'], self.__fan_membership['medium']))
             self.__rules.append(ctrl.Rule(
-                self.__temp_membership['normal'] | self.__temp_rate_mambership['normal'], self.__fan_membership['medium']))
+                self.__temp_membership['normal'] & self.__temp_rate_mambership['normal'], self.__fan_membership['medium']))
             self.__rules.append(ctrl.Rule(
-                self.__temp_membership['normal'] | self.__temp_rate_mambership['hot'], self.__fan_membership['fast']))
+                self.__temp_membership['normal'] & self.__temp_rate_mambership['hot'], self.__fan_membership['fast']))
 
             self.__rules.append(ctrl.Rule(
-                self.__temp_membership['hot'] | self.__temp_rate_mambership['cold'], self.__fan_membership['medium']))
+                self.__temp_membership['hot'] & self.__temp_rate_mambership['cold'], self.__fan_membership['medium']))
             self.__rules.append(ctrl.Rule(
-                self.__temp_membership['hot'] | self.__temp_rate_mambership['normal'], self.__fan_membership['fast']))
+                self.__temp_membership['hot'] & self.__temp_rate_mambership['normal'], self.__fan_membership['fast']))
             self.__rules.append(ctrl.Rule(
-                self.__temp_membership['hot'] | self.__temp_rate_mambership['hot'], self.__fan_membership['fast']))
+                self.__temp_membership['hot'] & self.__temp_rate_mambership['hot'], self.__fan_membership['fast']))
 
             return True
         except:
+            print("Error in Temperature model in apply rules process")
             return False
 
 
     def set_input_values(self , temperature , temperature_rate):
-        self.temperature = temperature
-        self.temperature_rate = temperature_rate
+        self.temperature = self.__convert_to_fahrenheit(temperature)
+        self.temperature_rate = self.__convert_to_fahrenheit(temperature_rate)
     
     def defuzzification(self):
         try:
             self.__fan_speed_ctrl = ctrl.ControlSystem(self.__rules)
             self.__fan_speed_simu = ctrl.ControlSystemSimulation(
                 self.__fan_speed_ctrl)
-            self.__fan_speed_simu.input['temperature'] = self.temperature
-            self.__fan_speed_simu.input['temperature_change_rate'] = self.temperature_rate
+            self.__fan_speed_simu.input['temperature'] = float(self.temperature)
+            self.__fan_speed_simu.input['temperature_change_rate'] = float(self.temperature_rate)
             self.__fan_speed_simu.compute()
-
             return True
         except:
+            print("Error in Temperature model defuzzification process")
             return False
 
     def get_ouput_values(self):
+        """ This return dict contain fan_speed value """
+    
         try:
             output = {
                 "fan_speed" : self.__fan_speed_simu.output['fan_speed']
             }
             return output
         except:
+            print("Error in Temperature model get output process")
             return False
 
 

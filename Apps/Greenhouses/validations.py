@@ -17,6 +17,8 @@ def greenhouse_validation(id:int , password:str , raise_exception:bool = True):
             raise serializers.ValidationError(detail=response)
     return False
 
+
+
 def greenhouse_sensor_validation(sensor_id: int, greenhouse_id:int , raise_exception:bool = True):
     try:
         sensor = Sensor.objects.get(pk = sensor_id)
@@ -29,6 +31,8 @@ def greenhouse_sensor_validation(sensor_id: int, greenhouse_id:int , raise_excep
             response = api_response.set_status_code(status.HTTP_404_NOT_FOUND).set_data("errors", "This sensor not integrated with this greenhouse or not exist").get()
             raise serializers.ValidationError(detail=response)
     return False
+
+
 
 def greenhouse_actuator_validation(actuator_id: int, greenhouse_id:int , raise_exception:bool = True):
     try:
@@ -43,13 +47,21 @@ def greenhouse_actuator_validation(actuator_id: int, greenhouse_id:int , raise_e
             raise serializers.ValidationError(detail=response)  
     return False
 
-def is_allow_automated_control(id:int , password:str ):
+
+
+def is_allow_automated_control(id:int , password:str, raise_exception:bool = True ):
     try:
         greenhouse = Greenhouse.objects.get(pk=id, password=password , is_active = True)
-        return greenhouse.automated_control
     except (Greenhouse.DoesNotExist):
         api_response = ApiResponse()
-        response = api_response.set_status_code(status.HTTP_404_NOT_FOUND).set_data("errors", "This actuator not integrated with this greenhouse or not exist").get()
+        response = api_response.set_status_code(status.HTTP_404_NOT_FOUND).set_data("errors", "This greenhouse not exist").get()
         raise serializers.ValidationError(detail=response)
-
-    return False
+    
+    if not greenhouse.automated_control:
+        if raise_exception:
+            api_response = ApiResponse()
+            response = api_response.set_status_code(status.HTTP_404_NOT_FOUND).set_data("errors", "Cannot apply automated control.").get()
+            raise serializers.ValidationError(detail=response)
+        return False
+    
+    return True

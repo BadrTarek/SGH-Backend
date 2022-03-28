@@ -10,7 +10,7 @@ MAX_TEMP = 60
 
 def input_validation(value):
     try:
-        if float(value) in range(MIN_TEMP,MAX_TEMP):
+        if float(value) >= MIN_TEMP and float(value)<=MAX_TEMP:
             return True
     except :
         pass

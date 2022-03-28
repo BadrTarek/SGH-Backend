@@ -5,10 +5,12 @@ from rest_framework import status
 from Library.api_response import ApiResponse
 from .models_serializers import SensorSerializer,SensorValueSerializer, ActuatorSerializer, ActuatorActionsSerializer 
 
-from Apps.Greenhouses.validations import greenhouse_validation , greenhouse_sensor_validation, greenhouse_actuator_validation
-from Apps.Hardware.validations import sensor_validation , actuator_validation
-from datetime import  datetime
-from FuzzyLogic.fuzzy_logic_system_settings import TIME_BETWEEN_FUZZY_ACTIONS
+from Apps.Greenhouses.validations import greenhouse_validation , greenhouse_sensor_validation, greenhouse_actuator_validation , is_allow_automated_control
+from Apps.Hardware.validations import sensor_validation , actuator_validation 
+from datetime import  datetime , timedelta
+# from FuzzyLogic.fuzzy_logic_system_settings import TIME_BETWEEN_FUZZY_ACTIONS
+
+TIME_BETWEEN_FUZZY_ACTIONS = timedelta(minutes=0)
 
 
 class SensorWithValueSerializer(serializers.Serializer):
@@ -21,21 +23,14 @@ class StoreSensorValuesSerializer(serializers.Serializer):
     sensors = serializers.ListField(child = SensorWithValueSerializer())
             
     def validate(self, data):
-        greenhouse_validation(data["greenhouse_id"] , password=data["password"])
+        greenhouse_validation(data["greenhouse_id"] , data["password"])
         for sensor in data["sensors"]:
-            # sensor_validation(id = sensor['sensor_id'],value = sensor["value"])
+            sensor_validation(id = sensor['sensor_id'],value = sensor["value"])
             greenhouse_sensor_validation(sensor['sensor_id'],data["greenhouse_id"])
         return data
-    
-    def get_sensor_value(self , id):
-        for sensor_value in self.sensor_values_response :
-            if  sensor_value.sensor == Sensor.get_sensor(id):
-                return sensor_value.value
-        return False
-        
-    
-    def save(self,   **kwargs):
 
+    def save(self,   **kwargs):
+        
         self.sensor_values_response = []
         self.greenhouse = Greenhouse.get_greenhouse(self.data['greenhouse_id'],self.data['password'])
 
@@ -54,6 +49,74 @@ class StoreSensorValuesSerializer(serializers.Serializer):
     def get_greenhouse(self):
         return self.greenhouse
 
+class TakeActionSerializer(serializers.Serializer):
+
+    greenhouse_id = serializers.IntegerField()
+    password = serializers.CharField()
+    actuator_id = serializers.IntegerField()
+    value = serializers.CharField()
+    duration = serializers.CharField(required=False, allow_null=True)
+    
+    def validate(self, data):
+        greenhouse_validation(data["greenhouse_id"],data["password"])
+        actuator_validation(data["actuator_id"])
+        self.actuator = Actuator.get_actuator(data["actuator_id"])
+        self.greenhouse = Greenhouse.get_greenhouse(data["greenhouse_id"],self.data["password"])
+        return data
+
+    def save(self,  **kwargs):
+        action = ActuatorsAction.objects.create(
+            actuator=self.actuator,
+            greenhouse=self.greenhouse,
+            value=self.data["value"],
+            duration=self.data["duration"]
+        )
+
+        return action
+
+class TakeAutomatedActionSerializer(serializers.Serializer):
+
+    greenhouse_id = serializers.IntegerField()
+    password = serializers.CharField()
+    actuator_id = serializers.IntegerField()
+    value = serializers.CharField()
+    duration = serializers.CharField(required=False, allow_null=True)
+    
+    def check_date(self, action_date):
+        difference  = datetime.now() - datetime.strptime(str(action_date)[:19] , '%Y-%m-%d %H:%M:%S')
+        
+        if  difference < TIME_BETWEEN_FUZZY_ACTIONS:
+            return False
+        return True        
+    
+    def validate(self, data):
+        greenhouse_validation(data["greenhouse_id"],data["password"])
+        actuator_validation(data["actuator_id"])
+        is_allow_automated_control(data["greenhouse_id"],data["password"])
+        
+        self.actuator = Actuator.get_actuator(data["actuator_id"])
+        self.greenhouse = Greenhouse.get_greenhouse(data["greenhouse_id"],data["password"])
+        last_action = ActuatorsAction.get_last_automated_actions(self.greenhouse , self.actuator)
+
+        
+        if last_action:
+            if not self.check_date(last_action.created_at):    
+                api_response = ApiResponse()
+                response = api_response.set_status_code(status.HTTP_404_NOT_FOUND).set_data("errors", "Cannot apply automated control in the current date.").get()
+                raise serializers.ValidationError(detail=response)
+        
+        return data
+
+    def save(self,  **kwargs):
+        action = ActuatorsAction.objects.create(
+            actuator=self.actuator,
+            greenhouse=self.greenhouse,
+            value=self.data["value"],
+            duration=self.data["duration"],
+            is_automated_action = True
+        )
+
+        return action
 
 # class GetSensorValuesSerializer(serializers.Serializer):
 #     greenhouse_id = serializers.IntegerField()
@@ -96,73 +159,6 @@ class StoreSensorValuesSerializer(serializers.Serializer):
 #         return values
 
 
-class TakeActionSerializer(serializers.Serializer):
-
-    greenhouse_id = serializers.IntegerField()
-    password = serializers.CharField()
-    actuator_id = serializers.IntegerField()
-    value = serializers.CharField()
-    duration = serializers.CharField(required=False, allow_null=True)
-    
-    def validate(self, data):
-        greenhouse_validation(data["greenhouse_id"],data["password"])
-        actuator_validation(data["actuator_id"])
-        return data
-
-    def save(self,  **kwargs):
-        self.actuator = Actuator.get_actuator(self.data["actuator_id"])
-        self.greenhouse = Greenhouse.get_greenhouse(self.data["greenhouse_id"],self.data["password"])
-        action = ActuatorsAction.objects.create(
-            actuator=self.actuator,
-            greenhouse=self.greenhouse,
-            value=self.data["value"],
-            duration=self.data["duration"]
-        )
-
-        return action
-
-class TakeAutomatedActionSerializer(serializers.Serializer):
-
-    greenhouse_id = serializers.IntegerField()
-    password = serializers.CharField()
-    actuator_id = serializers.IntegerField()
-    value = serializers.CharField()
-    duration = serializers.CharField(required=False, allow_null=True)
-    
-    def check_date(self, action_date):
-        difference  = datetime.now() - datetime.strptime(str(action_date)[:19] , '%Y-%m-%d %H:%M:%S')
-        
-        if  difference < TIME_BETWEEN_FUZZY_ACTIONS:
-            return False
-        return True
-            
-    
-    def validate(self, data):
-        greenhouse_validation(data["greenhouse_id"],data["password"])
-        actuator_validation(data["actuator_id"])
-        self.actuator = Actuator.get_actuator(data["actuator_id"])
-        self.greenhouse = Greenhouse.get_greenhouse(data["greenhouse_id"],data["password"])
-        last_action = ActuatorsAction.get_last_automated_actions(self.greenhouse , self.actuator)
-
-        
-        if last_action:
-            if not self.check_date(last_action.created_at):    
-                api_response = ApiResponse()
-                response = api_response.set_status_code(status.HTTP_404_NOT_FOUND).set_data("errors", "Cannot apply automated control.").get()
-                raise serializers.ValidationError(detail=response)
-        
-        return data
-
-    def save(self,  **kwargs):
-        action = ActuatorsAction.objects.create(
-            actuator=self.actuator,
-            greenhouse=self.greenhouse,
-            value=self.data["value"],
-            duration=self.data["duration"],
-            is_automated_action = True
-        )
-
-        return action
 
 
 # class GetActionsSerializer(serializers.Serializer):

@@ -1,6 +1,3 @@
-
-
-
 PORT = 8000
 
 # Clients Namespaces
